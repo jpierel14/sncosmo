@@ -8,6 +8,43 @@ sncosmo v1.0 will continue to work with any v1.x version. However,
 exact results may differ between versions in the 1.x series. (For
 example, due to changes in integration method.)
 
+
+v2.10.3 (2024-01-31)
+====================
+
+- Fix issue with Python 3.12. Added dependency, `looseversion`, to replace removed `distutil` module (#387).
+
+
+v2.10.2 (2023-09-29)
+====================
+
+- Add ultrasat_ bandpasses (#381).
+
+.._ultrasat: https://www.weizmann.ac.il/ultrasat/
+
+v2.10.1 (2023-06-28)
+====================
+
+- Add GOTO_ (#374) and `DES u`_ (#371) filters.
+
+.. _GOTO: https://goto-observatory.org/
+.. _DES u: https://noirlab.edu/science/programs/ctio/filters/Dark-Energy-Camera
+
+v2.10.0 (2023-04-27)
+====================
+
+Major Changes:
+
+- Dropped support for Python <3.7 (#361)
+
+- Add phase dependence option to PropagationEffect (#359)
+
+Additions & Improvements:
+
+- Add retrained SALT2 models from the DES and Pantheon+ teams (#355)
+  
+- Add TESS filter (#357)
+
 v2.9.0 (2022-09-27)
 ===================
 

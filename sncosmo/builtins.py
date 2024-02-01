@@ -20,7 +20,8 @@ from . import conf
 from . import io
 from . import snfitio
 from .bandpasses import (
-    Bandpass, _BANDPASSES, _BANDPASS_INTERPOLATORS, read_bandpass)
+    Bandpass, BandpassInterpolator,
+    _BANDPASSES, _BANDPASS_INTERPOLATORS, read_bandpass)
 
 from .constants import BANDPASS_TRIM_LEVEL
 from .magsystems import (
@@ -56,7 +57,7 @@ def get_rootdir():
     return data_dir
 
 
-DATADIR = DataMirror(get_rootdir, "http://sncosmo.github.io/data")
+DATADIR = DataMirror(get_rootdir, "https://sncosmo.github.io/data")
 
 
 # =============================================================================
@@ -142,7 +143,8 @@ des_meta = {
     'filterset': 'des',
     'retrieved': '22 March 2013',
     'description': 'Dark Energy Camera grizy filter set at airmass 1.3'}
-for name, fname in [('desg', 'bandpasses/des/des_g.dat'),
+for name, fname in [('desu', 'bandpasses/des/des_u.dat'),
+                    ('desg', 'bandpasses/des/des_g.dat'),
                     ('desr', 'bandpasses/des/des_r.dat'),
                     ('desi', 'bandpasses/des/des_i.dat'),
                     ('desz', 'bandpasses/des/des_z.dat'),
@@ -529,6 +531,20 @@ for filt in ['Red']:
                                 args=(relpath,), meta=tess_meta)
 
 
+# GOTO
+goto_meta = {
+    'filterset': 'goto',
+    'retrieved': '16 June 2023',
+    'dataurl': ('http://svo2.cab.inta-csic.es/svo/theory/fps/getdata.php?'
+                'format=ascii&id=Misc'),
+    'description': ('GOTO filters from SVO (includes filter, optics,'
+                    'detector and atmosphere.)')}
+for filt in ['B', 'G', 'L', 'R']:
+    name = 'goto' + filt[0].lower()
+    relpath = 'bandpasses/goto/goto.{}'.format(filt)
+    _BANDPASSES.register_loader(name, load_bandpass_remote_aa,
+                                args=(relpath,), meta=goto_meta)
+
 # =============================================================================
 # interpolators
 
@@ -544,6 +560,30 @@ for letter in ('u', 'g', 'r', 'i', 'z', 'y'):
     _BANDPASS_INTERPOLATORS.register_loader('megacampsf::' + letter,
                                             load_megacampsf, args=(letter,),
                                             meta=megacam_meta)
+
+ultrasat_meta = {'filterset': 'ultrasat'}
+
+
+def load_ultrasat(name=None):
+    wavelengths = DATADIR.abspath('bandpasses/ultrasat/Wavelength.dat')
+    Rdeg = DATADIR.abspath('bandpasses/ultrasat/Rdeg.dat')
+    transmission = DATADIR.abspath('bandpasses/ultrasat/ULTRASAT_TR.dat')
+
+    wavelengths = np.loadtxt(wavelengths)
+    Rdeg = np.loadtxt(Rdeg)
+    transmission = np.loadtxt(transmission, delimiter=',').T
+
+    # transmission functions at each radius
+    radial_transmissions = []
+    for r, tr in zip(Rdeg, transmission):
+        radial_transmissions.append((r, wavelengths*u.AA, tr))
+
+    return BandpassInterpolator([], radial_transmissions, name=name)
+
+
+_BANDPASS_INTERPOLATORS.register_loader('ultrasat',
+                                        load_ultrasat,
+                                        meta=ultrasat_meta)
 
 # =============================================================================
 # Sources
