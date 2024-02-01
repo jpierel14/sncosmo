@@ -276,7 +276,7 @@ def _guess_t0_and_amplitude_photometry(data, model, minsnr):
     data_tmax = data_time[maxband][np.argmax(data_flux[maxband])]
     model_tmax = timegrid[np.argmax(model_lc[maxband])]
     t0 = model.get('t0') + data_tmax - model_tmax
-
+    
     return t0, amplitude
 
 
@@ -991,9 +991,10 @@ def nest_lc(data, model, vparam_names, bounds, guess_amplitude_bound=False,
     """
 
     try:
-        import nestle
+        import dynesty
+        from dynesty import utils as dyfunc
     except ImportError:
-        raise ImportError("nest_lc() requires the nestle package.")
+        raise ImportError("nest_lc() requires the dynesty package.")
 
     # experimental parameters
     tied = kwargs.get("tied", None)
@@ -1097,17 +1098,27 @@ def nest_lc(data, model, vparam_names, bounds, guess_amplitude_bound=False,
 
     def loglike(parameters):
         model.parameters[idx] = parameters
+        #import pdb
+        #pdb.set_trace()
         return -0.5 * chisq(fitdata, model, modelcov=modelcov)
 
     t0 = time.time()
-    res = nestle.sample(loglike, prior_transform, ndim, npdim=npdim,
-                        npoints=npoints, method=method, maxiter=maxiter,
-                        maxcall=maxcall, rstate=rstate,
-                        callback=(nestle.print_progress if verbose else None))
+    sampler = dynesty.NestedSampler(loglike, prior_transform, ndim, nlive = npoints)
+    sampler.run_nested(maxiter=maxiter,maxcall=maxcall,print_progress=verbose)
+    #res = nestle.sample(loglike, prior_transform, ndim, #npdim=npdim,
+    #                    npoints=npoints, method=method, maxiter=maxiter,
+    #                    maxcall=maxcall, rstate=rstate,
+    #                    callback=(nestle.print_progress if verbose else None))
+
     elapsed = time.time() - t0
 
     # estimate parameters and covariance from samples
-    vparameters, cov = nestle.mean_and_cov(res.samples, res.weights)
+    res = sampler.results
+    samples = res.samples  # samples
+    weights = res.importance_weights()
+
+    # Compute weighted mean and covariance.
+    vparameters, cov = dyfunc.mean_and_cov(samples, weights)
 
     # update model parameters to estimated ones.
     model.set(**dict(zip(vparam_names, vparameters)))
@@ -1117,28 +1128,23 @@ def nest_lc(data, model, vparam_names, bounds, guess_amplitude_bound=False,
         unsort_idx = np.argsort(sortidx)  # indicies that will unsort array
         data_mask = data_mask[unsort_idx]
 
-    # `res` is a nestle.Result object. Collect result into a sncosmo.Result
-    # object for consistency, and add more fields.
+    
+
+    
     res = Result(niter=res.niter,
-                 ncall=res.ncall,
-                 logz=res.logz,
-                 logzerr=res.logzerr,
-                 h=res.h,
-                 samples=res.samples,
-                 weights=res.weights,
-                 logvol=res.logvol,
-                 logl=res.logl,
-                 vparam_names=copy.copy(vparam_names),
-                 ndof=len(fitdata) - len(vparam_names),
-                 bounds=bounds,
-                 time=elapsed,
-                 parameters=model.parameters.copy(),
-                 covariance=cov,
-                 errors=OrderedDict(zip(vparam_names,
-                                        np.sqrt(np.diagonal(cov)))),
-                 param_dict=OrderedDict(zip(model.param_names,
-                                            model.parameters)),
-                 data_mask=data_mask)
+                           ncall=res.ncall,
+                           logz=np.max(res.logz),
+                           logzerr=res.logzerr,
+                           #h=res.h,
+                           samples=res.samples,
+                           weights=weights,
+                           logvol=res.logvol,
+                           logl=res.logl,
+                           errors=OrderedDict(zip(vparam_names,
+                                                  np.sqrt(np.diagonal(cov)))),
+                           vparam_names=copy.copy(vparam_names),
+                           bounds=bounds,
+                           dynasty_res=res)
 
     return res, model
 
