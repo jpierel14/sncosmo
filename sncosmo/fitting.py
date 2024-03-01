@@ -989,7 +989,6 @@ def nest_lc(data, model, vparam_names, bounds, guess_amplitude_bound=False,
         A copy of the model with parameters set to the values in
         ``res.parameters``.
     """
-
     try:
         import dynesty
         from dynesty import utils as dyfunc
