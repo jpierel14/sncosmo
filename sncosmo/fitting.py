@@ -1101,9 +1101,11 @@ def nest_lc(data, model, vparam_names, bounds, guess_amplitude_bound=False,
         #pdb.set_trace()
         return -0.5 * chisq(fitdata, model, modelcov=modelcov)
 
+
+    print(kwargs,verbose)
     t0 = time.time()
-    sampler = dynesty.NestedSampler(loglike, prior_transform, ndim, nlive = npoints)
-    sampler.run_nested(maxiter=maxiter,maxcall=maxcall,print_progress=verbose)
+    sampler = dynesty.NestedSampler(loglike, prior_transform, ndim, nlive = npoints,bound='single')
+    sampler.run_nested(maxiter=maxiter,maxcall=maxcall,print_progress=True,**kwargs)
     #res = nestle.sample(loglike, prior_transform, ndim, #npdim=npdim,
     #                    npoints=npoints, method=method, maxiter=maxiter,
     #                    maxcall=maxcall, rstate=rstate,
