@@ -1099,7 +1099,9 @@ def nest_lc(data, model, vparam_names, bounds, guess_amplitude_bound=False,
         model.parameters[idx] = parameters
         #import pdb
         #pdb.set_trace()
-        return -0.5 * chisq(fitdata, model, modelcov=modelcov)
+        chisq_calc = -0.5 * chisq(fitdata, model, modelcov=modelcov) 
+        #print(model._source.name,chisq_calc)
+        return chisq_calc
 
 
     print(kwargs,verbose)
@@ -1134,7 +1136,7 @@ def nest_lc(data, model, vparam_names, bounds, guess_amplitude_bound=False,
     
     res = Result(niter=res.niter,
                            ncall=res.ncall,
-                           logz=np.max(res.logz),
+                           logz=res.logz[-1],
                            logzerr=res.logzerr,
                            #h=res.h,
                            samples=res.samples,
