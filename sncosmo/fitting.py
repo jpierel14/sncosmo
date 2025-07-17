@@ -1106,7 +1106,7 @@ def nest_lc(data, model, vparam_names, bounds, guess_amplitude_bound=False,
 
     print(kwargs,verbose)
     t0 = time.time()
-    sampler = dynesty.NestedSampler(loglike, prior_transform, ndim, nlive = npoints,bound='single')
+    sampler = dynesty.NestedSampler(loglike, prior_transform, ndim, nlive = npoints,bound=method)
     sampler.run_nested(maxiter=maxiter,maxcall=maxcall,print_progress=True,**kwargs)
     #res = nestle.sample(loglike, prior_transform, ndim, #npdim=npdim,
     #                    npoints=npoints, method=method, maxiter=maxiter,
