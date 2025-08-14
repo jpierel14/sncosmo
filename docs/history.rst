@@ -8,12 +8,52 @@ sncosmo v1.0 will continue to work with any v1.x version. However,
 exact results may differ between versions in the 1.x series. (For
 example, due to changes in integration method.)
 
+v2.12.1 (2025-03-12)
+====================
 
-v2.10.3 (2024-01-31)
+- Add Galax fileters (#408)
+- Fix bug in fitting
+
+v2.12.0 (2025-01-21)
+====================
+
+Major Changes & Additions:
+
+- Add support for Numpy 2.0 (#398)
+
+- Add non-radially varability to bandpasses (#400)
+
+- Adds hdf5 dependancy (#400)
+
+Minor Changes:
+
+- Improve testing (#402)
+
+v2.11.2 (2024-11-01)
+====================
+
+- Add SkyMapper filters
+
+v2.11.1 (2024-07-11)
+====================
+
+- Add Nugent Type Ia Super-Chandra model from Fitz Axen and Nugent, (2023) ApJ, v. 953, p. 13
+
+v2.11.0 (2024-07-11)
+====================
+
+- Drop support for Python 3.8
+- New `add_effect` for G10 and C11 SNIa intrinsic scatter models (#378)
+- Salt2 ColorLaw function correction (#389)
+
+
+v2.10.4 (2024-02-20)
 ====================
 
 - Fix issue with Python 3.12. Added dependency, `looseversion`, to replace removed `distutil` module (#387).
 
+v2.10.3 (unreleased)
+====================
 
 v2.10.2 (2023-09-29)
 ====================

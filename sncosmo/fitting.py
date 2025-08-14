@@ -59,6 +59,10 @@ def generate_chisq(data, model, spectra, signature='iminuit', modelcov=False):
                                             zp=data.zp, zpsys=data.zpsys)
                 diff = data.flux - model_flux
                 phot_chisq = np.dot(np.dot(diff, invcov), diff)
+                if math.isnan(phot_chisq):
+                    # Tell iminuit to keep away from this point
+                    # (in most cases this should be inf instead of nan anyway)
+                    phot_chisq = float('inf')
                 full_chisq += phot_chisq
 
             if spectra is not None:
@@ -396,11 +400,7 @@ def _run_iminuit(chisq, parameter_names, start_values, start_errors, bounds,
 
     # The iminuit API changed significantly in version 2. Handle both the new
     # and old APIs.
-    try:
-        from distutils.version import LooseVersion
-    except ModuleNotFoundError:
-        # distutils was dropped in python 2.12
-        from looseversion import LooseVersion
+    from looseversion import LooseVersion
     iminuit_version = LooseVersion(iminuit.__version__)
 
     if verbose:
@@ -425,7 +425,6 @@ def _run_iminuit(chisq, parameter_names, start_values, start_errors, bounds,
 
         for key in fixed_parameters:
             m.fixed[key] = True
-            m.errors[key] = 0.
 
         m.migrad(ncall=maxcall)
         fmin = m.fmin
