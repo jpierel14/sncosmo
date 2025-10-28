@@ -83,7 +83,10 @@ def generate_chisq(data, model, spectra, signature='iminuit', modelcov=False):
     else:
         raise ValueError("unknown signature: {!r}".format(signature))
 
-    return chisq
+    if not np.isnan(chisq):
+        return chisq
+    else:
+        return np.inf
 
 
 def chisq(data, model, modelcov=False):
@@ -111,7 +114,11 @@ def chisq(data, model, modelcov=False):
     if data.fluxcov is None and not modelcov:
         mflux = model.bandflux(data.band, data.time,
                                zp=data.zp, zpsys=data.zpsys)
-        return np.sum(((data.flux - mflux) / data.fluxerr)**2)
+        chi = np.sum(((data.flux - mflux) / data.fluxerr)**2)
+        if not np.isnan(chi):
+            return chi
+        else:
+            return np.inf
 
     else:
         # need to invert a covariance matrix
@@ -1006,7 +1013,9 @@ def nest_lc(data, model, vparam_names, bounds, guess_amplitude_bound=False,
     else:
         sortidx = None
 
+    phase_extrapolation = model._allow_phase_extrapolation
     model = copy.copy(model)
+    model._allow_phase_extrapolation = phase_extrapolation
     bounds = copy.copy(bounds)  # need to copy this b/c we modify it below
 
     # Order vparam_names the same way it is ordered in the model:
@@ -1103,10 +1112,9 @@ def nest_lc(data, model, vparam_names, bounds, guess_amplitude_bound=False,
         return chisq_calc
 
 
-    print(kwargs,verbose)
     t0 = time.time()
     sampler = dynesty.NestedSampler(loglike, prior_transform, ndim, nlive = npoints,bound=method)
-    sampler.run_nested(maxiter=maxiter,maxcall=maxcall,print_progress=True,**kwargs)
+    sampler.run_nested(maxiter=maxiter,maxcall=maxcall,print_progress=verbose,**kwargs)
     #res = nestle.sample(loglike, prior_transform, ndim, #npdim=npdim,
     #                    npoints=npoints, method=method, maxiter=maxiter,
     #                    maxcall=maxcall, rstate=rstate,

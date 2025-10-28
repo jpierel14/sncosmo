@@ -532,7 +532,9 @@ class TimeSeriesSource(Source):
         self._zero_before = zero_before
 
     def _flux(self, phase, wave):
+
         f = self._parameters[0] * self._model_flux(phase, wave)
+
         if self._zero_before:
             mask = np.atleast_1d(phase) < self.minphase()
             f[mask, :] = 0.
@@ -769,7 +771,6 @@ class SALT2Source(Source):
         self.version = version
         self._model = {}
         self._parameters = np.array([1., 0., 0.])
-
         names_or_objs = {'M0': m0file, 'M1': m1file,
                          'LCRV00': lcrv00file, 'LCRV11': lcrv11file,
                          'LCRV01': lcrv01file, 'errscale': errscalefile,
@@ -809,8 +810,10 @@ class SALT2Source(Source):
     def _flux(self, phase, wave):
         m0 = self._model['M0'](phase, wave)
         m1 = self._model['M1'](phase, wave)
-        return (self._parameters[0] * (m0 + self._parameters[1] * m1) *
-                10. ** (-0.4 * self._colorlaw(wave) * self._parameters[2]))
+        f = self._parameters[0] * (m0 + self._parameters[1] * m1) *\
+                10. ** (-0.4 * self._colorlaw(wave) * self._parameters[2])
+
+        return (f)
 
     def _bandflux_rvar_single(self, band, phase):
         """Model relative variance for a single bandpass."""
@@ -1327,7 +1330,7 @@ class Model(_ModelBase):
     """
 
     def __init__(self, source, effects=None,
-                 effect_names=None, effect_frames=None):
+                 effect_names=None, effect_frames=None,allow_phase_extrapolation=True):
         # Set parameter names, initial values (inital values set to zero)
         self._param_names = ['z', 't0']
         self.param_names_latex = ['z', 't_0']
@@ -1342,6 +1345,7 @@ class Model(_ModelBase):
         self._effects = []
         self._effect_names = []
         self._effect_frames = []
+        self._allow_phase_extrapolation = allow_phase_extrapolation
         if (effects is not None or effect_names is not None or
                 effect_frames is not None):
             try:
@@ -1572,6 +1576,8 @@ class Model(_ModelBase):
                 f = effect.propagate(effect_wave, f, phase=effect_phase)
             except TypeError:
                 f = effect.propagate(effect_wave, f)
+        if not self._allow_phase_extrapolation:
+            f[time>self.maxtime()] = np.nan
         return f
 
     def flux(self, time, wave):
